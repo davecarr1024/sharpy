@@ -1,9 +1,10 @@
+using System.Linq;
 using System;
 using System.Collections.Generic;
 
 namespace Sharpy.Lexer
 {
-    public class And : Rule, IEquatable<And>
+    public class And : Rule
     {
         public List<Rule> Rules { get; }
 
@@ -11,7 +12,9 @@ namespace Sharpy.Lexer
 
         public override string ToString() => $"And({Rules})";
 
-        public bool Equals(And other) => Rules == other.Rules;
+        public override bool Equals(object obj) => obj is And and && Rules.SequenceEqual(and.Rules);
+
+        public override int GetHashCode() => Rules.GetHashCode();
 
         public UnboundToken? Apply(string s)
         {

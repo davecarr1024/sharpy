@@ -2,13 +2,15 @@ using System;
 
 namespace Sharpy.Lexer
 {
-    public class Literal : Rule, IEquatable<Literal>
+    public class Literal : Rule
     {
         public string Value { get; }
 
         public Literal(string val) => Value = val;
 
-        public bool Equals(Literal rhs) => Value == rhs.Value;
+        public override bool Equals(object obj) => obj is Literal literal && Value == literal.Value;
+
+        public override int GetHashCode() => Value.GetHashCode();
 
         public override string ToString() => $"Literal({Value})";
 

@@ -2,7 +2,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Sharpy.Lexer;
 using System.Collections.Generic;
 
-namespace SharpyTest.Lexer
+namespace SharpyTest.LexerTest
 {
     [TestClass]
     public class LiteralTest

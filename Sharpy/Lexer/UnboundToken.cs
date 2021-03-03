@@ -2,7 +2,7 @@ using System;
 
 namespace Sharpy.Lexer
 {
-    public struct UnboundToken : IEquatable<UnboundToken>
+    public struct UnboundToken
     {
         public string Value { get; set; }
 
@@ -11,7 +11,9 @@ namespace Sharpy.Lexer
             Value = value;
         }
 
-        public bool Equals(UnboundToken rhs) => Value == rhs.Value;
+        public override bool Equals(object obj) => obj is UnboundToken rhs && Value == rhs.Value;
+
+        public override int GetHashCode() => Value.GetHashCode();
 
         public override string ToString() => $"UnboundToken({Value})";
     }

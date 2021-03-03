@@ -2,7 +2,7 @@ using System;
 
 namespace Sharpy.Lexer
 {
-    public struct Token : IEquatable<Token>
+    public struct Token
     {
         public string RuleName { get; }
 
@@ -17,7 +17,10 @@ namespace Sharpy.Lexer
             Location = location;
         }
 
-        public bool Equals(Token rhs) => RuleName == rhs.RuleName && Value == rhs.Value && Location.Equals(rhs.Location);
+        public override bool Equals(object obj) 
+            => obj is Token rhs && RuleName == rhs.RuleName && Value == rhs.Value && Location.Equals(rhs.Location);
+
+        public override int GetHashCode() => HashCode.Combine(RuleName, Value, Location);
 
         public override string ToString() => $"Token(rule_name={RuleName}, value={Value}, location={Location})";
     }
