@@ -3,7 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Sharpy.Errors;
 using System.Collections.Generic;
 
-namespace SharpyTest.Errors
+namespace SharpyTest.ErrorsTest
 {
     [TestClass]
     public class CompoundErrorTest
