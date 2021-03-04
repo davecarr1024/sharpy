@@ -5,17 +5,15 @@ using System.Collections.Generic;
 
 namespace Sharpy.Processor
 {
-    public class Processor<TInput, TOutput>
-        where TInput : IInput<TInput, TOutput>
-        where TOutput : IOutput<TOutput>, new()
+    public abstract class Processor<TInput, TOutput>
     {
         public struct Context
         {
             public Processor<TInput, TOutput> Processor { get; }
 
-            public TInput Input { get; }
+            public IEnumerable<TInput> Input { get; }
 
-            public Context(Processor<TInput, TOutput> processor, TInput input)
+            public Context(Processor<TInput, TOutput> processor, IEnumerable<TInput> input)
             {
                 Processor = processor;
                 Input = input;
@@ -23,7 +21,7 @@ namespace Sharpy.Processor
 
             public Context Advance(TOutput output)
             {
-                return new Context(Processor, Input.Advance(output));
+                return new Context(Processor, Processor.Advance(Input, output));
             }
         }
 
@@ -49,12 +47,14 @@ namespace Sharpy.Processor
 
             public TOutput Apply(Context context)
             {
-                TOutput output = new TOutput();
+                var outputs = new List<TOutput>();
                 foreach (var rule in Rules)
                 {
-                    output.AddChild(rule.Apply(context.Advance(output)));
+                    var output = rule.Apply(context);
+                    outputs.Add(output);
+                    context = context.Advance(output);
                 }
-                return output;
+                return context.Processor.Aggregate(outputs);
             }
         }
 
@@ -90,9 +90,7 @@ namespace Sharpy.Processor
                 }
                 if (rule_outputs.Count == 1)
                 {
-                    var output = new TOutput();
-                    output.AddChild(rule_outputs.First());
-                    return output;
+                    return context.Processor.Aggregate(new List<TOutput> { rule_outputs.First() });
                 }
                 else if (rule_outputs.Count > 1)
                 {
@@ -120,18 +118,46 @@ namespace Sharpy.Processor
 
             public TOutput Apply(Context context)
             {
-                var output = new TOutput();
+                var outputs = new List<TOutput>();
                 while (true)
                 {
                     try
                     {
-                        output.AddChild(Rule.Apply(context.Advance(output)));
+                        var output = Rule.Apply(context);
+                        outputs.Add(output);
+                        context = context.Advance(output);
                     }
                     catch (Error)
                     {
-                        return output;
+                        return context.Processor.Aggregate(outputs);
                     }
                 }
+            }
+        }
+
+        public class UntilEmpty : Rule
+        {
+            public Rule Rule { get; }
+
+            public UntilEmpty(Rule rule) => Rule = rule;
+
+
+            public override bool Equals(object obj) => obj is UntilEmpty rhs && Rule.Equals(rhs.Rule);
+
+            public override int GetHashCode() => Rule.GetHashCode();
+
+            public override string ToString() => $"UntilEmpty({Rule})";
+
+            public TOutput Apply(Context context)
+            {
+                var outputs = new List<TOutput>();
+                while (context.Input.Any())
+                {
+                    var output = Rule.Apply(context);
+                    outputs.Add(output);
+                    context = context.Advance(output);
+                }
+                return context.Processor.Aggregate(outputs);
             }
         }
 
@@ -150,17 +176,20 @@ namespace Sharpy.Processor
 
             public TOutput Apply(Context context)
             {
-                var output = new TOutput();
-                output.AddChild(Rule.Apply(context));
+                var output = Rule.Apply(context);
+                var outputs = new List<TOutput> { output };
+                context = context.Advance(output);
                 while (true)
                 {
                     try
                     {
-                        output.AddChild(Rule.Apply(context.Advance(output)));
+                        output = Rule.Apply(context);
+                        outputs.Add(output);
+                        context = context.Advance(output);
                     }
                     catch (Error)
                     {
-                        return output;
+                        return context.Processor.Aggregate(outputs);
                     }
                 }
             }
@@ -181,13 +210,14 @@ namespace Sharpy.Processor
 
             public TOutput Apply(Context context)
             {
-                var output = new TOutput();
                 try
                 {
-                    output.AddChild(Rule.Apply(context));
+                    return context.Processor.Aggregate(new List<TOutput> { Rule.Apply(context) });
                 }
-                catch (Error) { }
-                return output;
+                catch (Error)
+                {
+                    return context.Processor.Aggregate(new List<TOutput>());
+                }
             }
         }
 
@@ -219,26 +249,31 @@ namespace Sharpy.Processor
             Root = root;
         }
 
+        public abstract IEnumerable<TInput> Advance(IEnumerable<TInput> input, TOutput output);
+
+        public virtual TOutput SetRuleName(TOutput output, string rule_name) => output;
+
+        public abstract TOutput Aggregate(IEnumerable<TOutput> outputs);
+
+        public virtual Lexer.Location? Location(IEnumerable<TInput> input) => null;
+
         public TOutput ApplyRule(string rule_name, Context context)
         {
             if (!Rules.ContainsKey(rule_name))
             {
                 throw new Errors.Error($"unknown rule '{rule_name}'");
             }
-            TOutput output;
             try
             {
-                output = Rules[rule_name].Apply(context);
+                return SetRuleName(Rules[rule_name].Apply(context), rule_name);
             }
             catch (Errors.Error e)
             {
-                throw new Errors.Error($"while applying rule '{rule_name}'", context.Input.Location(), e);
+                throw new Errors.Error($"while applying rule '{rule_name}'", Location(context.Input), e);
             }
-            output.SetRuleName(rule_name);
-            return output;
         }
 
-        public TOutput Apply(TInput input)
+        public TOutput Apply(IEnumerable<TInput> input)
         {
             return ApplyRule(Root, new Context(this, input));
         }

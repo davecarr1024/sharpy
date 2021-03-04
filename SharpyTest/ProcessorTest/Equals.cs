@@ -1,28 +1,27 @@
+using System.Collections.Generic;
+using Sharpy.Errors;
 using Sharpy.Processor;
 using System.Linq;
 
 namespace SharpyTest.ProcessorTest
 {
-    public class Equals : Processor<Input, Output>.Rule
+    public class Equals : IntFilter.Rule
     {
         public int Val { get; }
 
-        public Equals(int val)
-        {
-            Val = val;
-        }
+        public Equals(int val) => Val = val;
 
-        public Output Apply(Processor<Input, Output>.Context context)
+        public IEnumerable<int> Apply(IntFilter.Context context)
         {
-            if (context.Input.Empty())
+            if (!context.Input.Any())
             {
-                throw new Sharpy.Errors.Error("eof");
+                throw new Error("no input");
             }
-            if (context.Input.Vals.First() != Val)
+            if (context.Input.First() != Val)
             {
-                throw new Sharpy.Errors.Error($"unexpected {context.Input.Vals.First()} != {Val}", context.Input.Location());
+                throw new Error($"input {context.Input.First()} != expected {Val}");
             }
-            return new Output(Val);
+            return new List<int> { Val };
         }
     }
 }
