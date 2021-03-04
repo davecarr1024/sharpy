@@ -20,7 +20,7 @@ namespace SharpyTest.ProcessorTest
                 (new List<int>{1,4}, null),
                 (new List<int>{4}, null),
                 (new List<int>{1,2,4}, null),
-                (new List<int>{}, new List<int>{}),
+                (new List<int>{}, null),
             })
             {
                 Func<IEnumerable<int>> apply = () =>

@@ -17,7 +17,9 @@ namespace Sharpy.Lexer
             Location = location;
         }
 
-        public override bool Equals(object obj) 
+        public Token WithRuleName(string rule_name) => new Token(rule_name, Value, Location);
+
+        public override bool Equals(object obj)
             => obj is Token rhs && RuleName == rhs.RuleName && Value == rhs.Value && Location.Equals(rhs.Location);
 
         public override int GetHashCode() => HashCode.Combine(RuleName, Value, Location);

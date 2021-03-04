@@ -10,13 +10,13 @@ namespace SharpyTest.ProcessorTest
     {
         public abstract Processor<TInput, TOutput> Processor();
 
-        public virtual Processor<TInput, TOutput>.Context Context(IEnumerable<TInput> input)
+        public virtual Processor<TInput, TOutput>.Context Context(TInput input)
             => new Processor<TInput, TOutput>.Context(Processor(), input);
 
         public virtual void CheckOutput(TOutput expected, TOutput output)
             => Assert.AreEqual(expected, output);
 
-        public void TestRule(Processor<TInput, TOutput>.Rule rule, IEnumerable<(IEnumerable<TInput>, TOutput)> cases)
+        public void TestRule(Processor<TInput, TOutput>.Rule rule, IEnumerable<(TInput, TOutput)> cases)
         {
             foreach ((var input, var output) in cases)
             {

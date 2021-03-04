@@ -7,7 +7,7 @@ namespace SharpyTest.ProcessorTest
     [TestClass]
     public class RefTest : IntFilterRuleTest
     {
-        public override Processor<int, IEnumerable<int>> Processor()
+        public override Processor<IEnumerable<int>, IEnumerable<int>> Processor()
             => new IntFilter(new Dictionary<string, IntFilter.Rule>{
                     {"a", new Equals(1)}
                 }, "");

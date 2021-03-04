@@ -1,3 +1,4 @@
+using System;
 using System.Xml;
 using Sharpy.Errors;
 using System.Linq;
@@ -11,9 +12,9 @@ namespace Sharpy.Processor
         {
             public Processor<TInput, TOutput> Processor { get; }
 
-            public IEnumerable<TInput> Input { get; }
+            public TInput Input { get; }
 
-            public Context(Processor<TInput, TOutput> processor, IEnumerable<TInput> input)
+            public Context(Processor<TInput, TOutput> processor, TInput input)
             {
                 Processor = processor;
                 Input = input;
@@ -33,6 +34,8 @@ namespace Sharpy.Processor
         public class And : Rule
         {
             public IEnumerable<Rule> Rules { get; }
+
+            public And(params Rule[] rules) : this(rules.AsEnumerable()) { }
 
             public And(IEnumerable<Rule> rules)
             {
@@ -54,18 +57,19 @@ namespace Sharpy.Processor
                     outputs.Add(output);
                     context = context.Advance(output);
                 }
-                return context.Processor.Aggregate(outputs);
+                return context.Processor.Aggregate(context, outputs);
             }
         }
+
+        public static And and(params Rule[] rules) => new And(rules.AsEnumerable());
 
         public class Or : Rule
         {
             public IEnumerable<Rule> Rules { get; }
 
-            public Or(IEnumerable<Rule> rules)
-            {
-                Rules = rules;
-            }
+            public Or(params Rule[] rules) : this(rules.AsEnumerable()) { }
+
+            public Or(IEnumerable<Rule> rules) => Rules = rules;
 
             public override bool Equals(object obj) => obj is Or rhs && Rules.SequenceEqual(rhs.Rules);
 
@@ -90,7 +94,9 @@ namespace Sharpy.Processor
                 }
                 if (rule_outputs.Count == 1)
                 {
-                    return context.Processor.Aggregate(new List<TOutput> { rule_outputs.First() });
+                    return context.Processor.Aggregate(
+                        context.Advance(rule_outputs.First()),
+                        new List<TOutput> { rule_outputs.First() });
                 }
                 else if (rule_outputs.Count > 1)
                 {
@@ -102,6 +108,8 @@ namespace Sharpy.Processor
                 }
             }
         }
+
+        public static Or or(params Rule[] rules) => new Or(rules.AsEnumerable());
 
         public class ZeroOrMore : Rule
         {
@@ -129,11 +137,13 @@ namespace Sharpy.Processor
                     }
                     catch (Error)
                     {
-                        return context.Processor.Aggregate(outputs);
+                        return context.Processor.Aggregate(context, outputs);
                     }
                 }
             }
         }
+
+        public static ZeroOrMore zero_or_more(Rule rule) => new ZeroOrMore(rule);
 
         public class UntilEmpty : Rule
         {
@@ -150,16 +160,20 @@ namespace Sharpy.Processor
 
             public TOutput Apply(Context context)
             {
-                var outputs = new List<TOutput>();
-                while (context.Input.Any())
+                var output = Rule.Apply(context);
+                var outputs = new List<TOutput> { output };
+                context = context.Advance(output);
+                while (!context.Processor.Empty(context.Input))
                 {
-                    var output = Rule.Apply(context);
+                    output = Rule.Apply(context);
                     outputs.Add(output);
                     context = context.Advance(output);
                 }
-                return context.Processor.Aggregate(outputs);
+                return context.Processor.Aggregate(context, outputs);
             }
         }
+
+        public static UntilEmpty until_empty(Rule rule) => new UntilEmpty(rule);
 
         public class OneOrMore : Rule
         {
@@ -189,11 +203,13 @@ namespace Sharpy.Processor
                     }
                     catch (Error)
                     {
-                        return context.Processor.Aggregate(outputs);
+                        return context.Processor.Aggregate(context, outputs);
                     }
                 }
             }
         }
+
+        public static OneOrMore one_or_more(Rule rule) => new OneOrMore(rule);
 
         public class ZeroOrOne : Rule
         {
@@ -212,14 +228,19 @@ namespace Sharpy.Processor
             {
                 try
                 {
-                    return context.Processor.Aggregate(new List<TOutput> { Rule.Apply(context) });
+                    var rule_output = Rule.Apply(context);
+                    return context.Processor.Aggregate(
+                        context.Advance(rule_output),
+                        new List<TOutput> { rule_output });
                 }
                 catch (Error)
                 {
-                    return context.Processor.Aggregate(new List<TOutput>());
+                    return context.Processor.Aggregate(context, new List<TOutput>());
                 }
             }
         }
+
+        public static ZeroOrOne zero_or_one(Rule rule) => new ZeroOrOne(rule);
 
         public class Ref : Rule
         {
@@ -233,11 +254,10 @@ namespace Sharpy.Processor
 
             public override string ToString() => $"Ref({Val})";
 
-            public TOutput Apply(Context context)
-            {
-                return context.Processor.ApplyRule(Val, context);
-            }
+            public TOutput Apply(Context context) => context.Processor.ApplyRule(Val, context);
         }
+
+        public static Ref ref_(string val) => new Ref(val);
 
         public Dictionary<string, Rule> Rules { get; }
 
@@ -249,13 +269,20 @@ namespace Sharpy.Processor
             Root = root;
         }
 
-        public abstract IEnumerable<TInput> Advance(IEnumerable<TInput> input, TOutput output);
+        public override bool Equals(object obj)
+            => obj is Processor<TInput, TOutput> rhs && Rules.SequenceEqual(rhs.Rules) && Root == rhs.Root;
+
+        public override int GetHashCode() => HashCode.Combine(Rules, Root);
+
+        public abstract TInput Advance(TInput input, TOutput output);
+
+        public abstract TOutput Aggregate(Context context, IEnumerable<TOutput> outputs);
+
+        public abstract bool Empty(TInput input);
 
         public virtual TOutput SetRuleName(TOutput output, string rule_name) => output;
 
-        public abstract TOutput Aggregate(IEnumerable<TOutput> outputs);
-
-        public virtual Lexer.Location? Location(IEnumerable<TInput> input) => null;
+        public virtual Lexer.Location? Location(TInput input) => null;
 
         public TOutput ApplyRule(string rule_name, Context context)
         {
@@ -273,9 +300,6 @@ namespace Sharpy.Processor
             }
         }
 
-        public TOutput Apply(IEnumerable<TInput> input)
-        {
-            return ApplyRule(Root, new Context(this, input));
-        }
+        public TOutput Apply(TInput input) => ApplyRule(Root, new Context(this, input));
     }
 }

@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace SharpyTest.ProcessorTest
 {
-    public class IntFilter : Processor<int, IEnumerable<int>>
+    public class IntFilter : Processor<IEnumerable<int>, IEnumerable<int>>
     {
         public IntFilter(Dictionary<string, Rule> rules, string root) : base(rules, root) { }
 
@@ -13,7 +13,7 @@ namespace SharpyTest.ProcessorTest
             return input.Skip(output.Count());
         }
 
-        public override IEnumerable<int> Aggregate(IEnumerable<IEnumerable<int>> outputs)
+        public override IEnumerable<int> Aggregate(Context context, IEnumerable<IEnumerable<int>> outputs)
         {
             var result = new List<int>();
             foreach (var output in outputs) {
@@ -21,5 +21,7 @@ namespace SharpyTest.ProcessorTest
             }
             return result;
         }
+
+        public override bool Empty(IEnumerable<int> input) => !input.Any();
     }
 }
