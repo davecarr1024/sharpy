@@ -1,5 +1,4 @@
 using System;
-using System.Xml;
 using Sharpy.Errors;
 using System.Linq;
 using System.Collections.Generic;
