@@ -143,8 +143,6 @@ namespace Sharpy.Processor
             }
         }
 
-        public static ZeroOrMore zero_or_more(Rule rule) => new ZeroOrMore(rule);
-
         public class UntilEmpty : Rule
         {
             public Rule Rule { get; }
@@ -160,20 +158,16 @@ namespace Sharpy.Processor
 
             public TOutput Apply(Context context)
             {
-                var output = Rule.Apply(context);
-                var outputs = new List<TOutput> { output };
-                context = context.Advance(output);
+                var outputs = new List<TOutput>();
                 while (!context.Processor.Empty(context.Input))
                 {
-                    output = Rule.Apply(context);
+                    var output = Rule.Apply(context);
                     outputs.Add(output);
                     context = context.Advance(output);
                 }
                 return context.Processor.Aggregate(context, outputs);
             }
         }
-
-        public static UntilEmpty until_empty(Rule rule) => new UntilEmpty(rule);
 
         public class OneOrMore : Rule
         {
@@ -209,8 +203,6 @@ namespace Sharpy.Processor
             }
         }
 
-        public static OneOrMore one_or_more(Rule rule) => new OneOrMore(rule);
-
         public class ZeroOrOne : Rule
         {
             public Rule Rule { get; }
@@ -240,8 +232,6 @@ namespace Sharpy.Processor
             }
         }
 
-        public static ZeroOrOne zero_or_one(Rule rule) => new ZeroOrOne(rule);
-
         public class Ref : Rule
         {
             public string Val { get; }
@@ -256,6 +246,14 @@ namespace Sharpy.Processor
 
             public TOutput Apply(Context context) => context.Processor.ApplyRule(Val, context);
         }
+
+        public static ZeroOrMore zero_or_more(Rule rule) => new ZeroOrMore(rule);
+
+        public static UntilEmpty until_empty(Rule rule) => new UntilEmpty(rule);
+
+        public static OneOrMore one_or_more(Rule rule) => new OneOrMore(rule);
+
+        public static ZeroOrOne zero_or_one(Rule rule) => new ZeroOrOne(rule);
 
         public static Ref ref_(string val) => new Ref(val);
 

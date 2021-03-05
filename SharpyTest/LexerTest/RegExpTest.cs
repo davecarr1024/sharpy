@@ -47,7 +47,7 @@ namespace SharpyTest.LexerTest
     public class RegExpTest : RuleTest<State, IEnumerable<Token>>
     {
         public override Processor<State, IEnumerable<Token>> Processor()
-            => new Sharpy.Lexer.Lexer(new Dictionary<string, Sharpy.Lexer.Lexer.Rule> { }, "");
+            => new Sharpy.Lexer.Lexer(new Dictionary<string, RegExp>());
 
         public override void CheckOutput(IEnumerable<Token> expected, IEnumerable<Token> output)
             => CollectionAssert.AreEqual(expected.ToList(), output.ToList());
@@ -85,7 +85,7 @@ namespace SharpyTest.LexerTest
                     ),
                     (
                         new State("", 0, new Location(0,0)),
-                        null
+                        new List<Token>{new Token("", "", new Location(0,0))}
                     ),
                     (
                         new State("a", 0, new Location(0,0)),
