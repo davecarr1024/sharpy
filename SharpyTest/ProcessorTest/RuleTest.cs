@@ -22,7 +22,7 @@ namespace SharpyTest.ProcessorTest
             {
                 if (output != null)
                 {
-                    CheckOutput(rule.Apply(Context(input)), output);
+                    CheckOutput(output, rule.Apply(Context(input)));
                 }
                 else
                 {

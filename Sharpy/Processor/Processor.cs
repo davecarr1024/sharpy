@@ -61,8 +61,6 @@ namespace Sharpy.Processor
             }
         }
 
-        public static And and(params Rule[] rules) => new And(rules.AsEnumerable());
-
         public class Or : Rule
         {
             public IEnumerable<Rule> Rules { get; }
@@ -108,8 +106,6 @@ namespace Sharpy.Processor
                 }
             }
         }
-
-        public static Or or(params Rule[] rules) => new Or(rules.AsEnumerable());
 
         public class ZeroOrMore : Rule
         {
@@ -246,6 +242,10 @@ namespace Sharpy.Processor
 
             public TOutput Apply(Context context) => context.Processor.ApplyRule(Val, context);
         }
+
+        public static And and(params Rule[] rules) => new And(rules.AsEnumerable());
+
+        public static Or or(params Rule[] rules) => new Or(rules.AsEnumerable());
 
         public static ZeroOrMore zero_or_more(Rule rule) => new ZeroOrMore(rule);
 
