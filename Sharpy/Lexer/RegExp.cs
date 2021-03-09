@@ -1,4 +1,3 @@
-using Sharpy.Errors;
 using Sharpy.Processor;
 using System;
 using System.Collections.Generic;
@@ -80,7 +79,20 @@ namespace Sharpy.Lexer
 
         public override bool Empty(string input) => !input.Any();
 
-        public IEnumerable<Token> Apply(Processor<State, IEnumerable<Token>>.Context context)
-            => new List<Token> { new Token("", Apply(context.Input.Input.Substring(context.Input.Pos)), context.Input.Location) };
+        public IEnumerable<Token> Apply(Processor<State, IEnumerable<Token>>.Context context) 
+        {
+            try 
+            {
+                return new List<Token> 
+                { 
+                    new Token("", 
+                    Apply(context.Input.Input.Substring(context.Input.Pos)), context.Input.Location) 
+                };
+            } 
+            catch (Error error) 
+            {
+                throw new Sharpy.Lexer.Lexer.Error(error.Message);
+            }
+        }
     }
 }

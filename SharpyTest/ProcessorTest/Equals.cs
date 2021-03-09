@@ -1,6 +1,4 @@
 using System.Collections.Generic;
-using Sharpy.Errors;
-using Sharpy.Processor;
 using System.Linq;
 
 namespace SharpyTest.ProcessorTest
@@ -15,11 +13,11 @@ namespace SharpyTest.ProcessorTest
         {
             if (!context.Input.Any())
             {
-                throw new Error("no input");
+                throw context.Error("no input");
             }
             if (context.Input.First() != Val)
             {
-                throw new Error($"input {context.Input.First()} != expected {Val}");
+                throw context.Error($"failed to match {Val}");
             }
             return new List<int> { Val };
         }

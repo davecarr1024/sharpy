@@ -1,4 +1,3 @@
-using Sharpy.Errors;
 using Sharpy.Lexer;
 using Sharpy.Processor;
 using System.Collections.Generic;

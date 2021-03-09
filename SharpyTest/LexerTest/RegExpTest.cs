@@ -8,7 +8,7 @@ using System.Linq;
 namespace SharpyTest.LexerTest
 {
     [TestClass]
-    public class TerminalTest : RuleTest<string, string>
+    public class TerminalTest : RuleTest<string, string, RegExp.Error>
     {
         public override Processor<string, string> Processor() => new RegExp(null);
 
@@ -25,7 +25,7 @@ namespace SharpyTest.LexerTest
     }
 
     [TestClass]
-    public class ClassTest : RuleTest<string, string>
+    public class ClassTest : RuleTest<string, string, RegExp.Error>
     {
         public override Processor<string, string> Processor() => new RegExp(null);
 
@@ -44,7 +44,7 @@ namespace SharpyTest.LexerTest
     }
 
     [TestClass]
-    public class RegExpTest : RuleTest<State, IEnumerable<Token>>
+    public class RegExpTest : RuleTest<State, IEnumerable<Token>, Lexer.Error>
     {
         public override Processor<State, IEnumerable<Token>> Processor()
             => new Sharpy.Lexer.Lexer(new Dictionary<string, RegExp>());

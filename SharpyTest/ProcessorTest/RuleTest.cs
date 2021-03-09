@@ -1,6 +1,5 @@
 using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Sharpy.Errors;
 using Sharpy.Processor;
 using System.Collections.Generic;
 
@@ -31,6 +30,4 @@ namespace SharpyTest.ProcessorTest
             }
         }
     }
-
-    public abstract class RuleTest<TInput, TOutput> : RuleTest<TInput, TOutput, Error> { }
 }

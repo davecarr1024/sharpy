@@ -1,11 +1,10 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Sharpy.Errors;
 using System.Collections.Generic;
 
 namespace SharpyTest.ProcessorTest
 {
     [TestClass]
-    public class OrTest : IntFilterRuleTest<CompoundError>
+    public class OrTest : IntFilterRuleTest
     {
         [TestMethod]
         public void TestApply()

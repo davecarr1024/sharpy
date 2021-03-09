@@ -1,14 +1,12 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
-using Sharpy.Errors;
 using Sharpy.Processor;
 using System;
 using System.Linq;
 
 namespace SharpyTest.ProcessorTest
 {
-    public class IntFilterRuleTest<TError> : RuleTest<IEnumerable<int>, IEnumerable<int>, TError>
-        where TError : Exception
+    public class IntFilterRuleTest : RuleTest<IEnumerable<int>, IEnumerable<int>, IntFilter.Error>
     {
         public override Processor<IEnumerable<int>, IEnumerable<int>> Processor()
             => new IntFilter(new Dictionary<string, IntFilter.Rule>(), "");
@@ -16,6 +14,4 @@ namespace SharpyTest.ProcessorTest
         public override void CheckOutput(IEnumerable<int> expected, IEnumerable<int> output)
             => CollectionAssert.AreEqual(expected.ToList(), output.ToList());
     }
-
-    public class IntFilterRuleTest : IntFilterRuleTest<Error> { }
 }

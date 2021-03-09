@@ -1,5 +1,5 @@
+using Sharpy.Lexer;
 using System;
-using Sharpy.Errors;
 using System.Linq;
 using System.Collections.Generic;
 
@@ -7,11 +7,64 @@ namespace Sharpy.Processor
 {
     public abstract class Processor<TInput, TOutput>
     {
+        public class Error : Exception
+        {
+            public override string Message { get; }
+
+            public Location? Location { get; }
+
+            public Error(string message, Location? location = null)
+            {
+                Message = message;
+                Location = location;
+            }
+
+            public Error(string message, Error error, Location? location = null)
+                : this($"{message}: {error.Message}", MaxLocation(location, error.Location))
+            { }
+
+            public Error(IEnumerable<Error> errors)
+            : this(AggregateMessages(errors.Where(error => error.Location.Equals(MaxLocation(errors.Select(e => e.Location).ToArray())))),
+                    MaxLocation(errors.Select(error => error.Location).ToArray()))
+            { }
+
+            public override bool Equals(object obj) => obj is Error rhs && Message == rhs.Message && Location.Equals(rhs.Location);
+
+            public override int GetHashCode() => HashCode.Combine(Message, Location);
+
+            public override string ToString() => Location is Location loc ? $"{Message} at {loc}" : Message;
+
+            private static Location? MaxLocation(params Location?[] locations)
+            {
+                var locs = locations.Where(location => location != null);
+                return locs.Any() ? locs.Max() : null;
+            }
+
+            private static string AggregateMessages(IEnumerable<Error> errors)
+            {
+                if (errors.Count() > 1)
+                {
+                    return string.Format("[{0}]", string.Join(", ", errors.Select(error => error.Message)));
+                }
+                else if (errors.Count() == 1)
+                {
+                    return errors.First().Message;
+                }
+                else
+                {
+                    return "unknown error";
+                }
+            }
+
+        }
+
         public struct Context
         {
             public Processor<TInput, TOutput> Processor { get; }
 
             public TInput Input { get; }
+
+            public Location? Location { get { return Processor.Location(Input); } }
 
             public Context(Processor<TInput, TOutput> processor, TInput input)
             {
@@ -23,6 +76,11 @@ namespace Sharpy.Processor
             {
                 return new Context(Processor, Processor.Advance(Input, output));
             }
+
+            public Error Error(string message) => new Error(message, Location);
+
+            public Error Error(string message, Error error) => new Error(message, error, Location);
+            public Error Error(IEnumerable<Error> errors) => new Error(errors);
         }
 
         public interface Rule
@@ -101,7 +159,7 @@ namespace Sharpy.Processor
                 }
                 else
                 {
-                    throw new CompoundError(errors);
+                    throw context.Error(errors);
                 }
             }
         }
@@ -279,21 +337,21 @@ namespace Sharpy.Processor
 
         public virtual TOutput SetRuleName(TOutput output, string rule_name) => output;
 
-        public virtual Lexer.Location? Location(TInput input) => null;
+        public virtual Location? Location(TInput input) => null;
 
         public TOutput ApplyRule(string rule_name, Context context)
         {
             if (!Rules.ContainsKey(rule_name))
             {
-                throw new Errors.Error($"unknown rule '{rule_name}'");
+                throw context.Error($"unknown rule '{rule_name}'");
             }
             try
             {
                 return SetRuleName(Rules[rule_name].Apply(context), rule_name);
             }
-            catch (Errors.Error e)
+            catch (Error e)
             {
-                throw new Errors.Error($"while applying rule '{rule_name}'", Location(context.Input), e);
+                throw context.Error($"while applying rule '{rule_name}'", e);
             }
         }
 

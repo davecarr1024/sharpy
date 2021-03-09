@@ -1,5 +1,4 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Sharpy.Errors;
 using Sharpy.Lexer;
 using Sharpy.Parser;
 using System;
@@ -31,7 +30,7 @@ namespace SharpyTest.ParserTest
                 }
                 else
                 {
-                    Assert.ThrowsException<Error>(() => apply());
+                    Assert.ThrowsException<Parser.Error>(() => apply());
                 }
             }
         }
@@ -96,7 +95,7 @@ namespace SharpyTest.ParserTest
                 }
                 else
                 {
-                    Assert.ThrowsException<Error>(() => apply());
+                    Assert.ThrowsException<Parser.Error>(() => apply());
                 }
             }
         }

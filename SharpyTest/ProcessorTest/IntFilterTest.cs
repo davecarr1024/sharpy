@@ -1,5 +1,4 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Sharpy.Errors;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -42,7 +41,7 @@ namespace SharpyTest.ProcessorTest
                 }
                 else
                 {
-                    Assert.ThrowsException<Error>(apply);
+                    Assert.ThrowsException<IntFilter.Error>(apply);
                 }
             }
         }
