@@ -59,17 +59,17 @@ namespace SharpyTest.ParserTest
                     tokens(token("a")),
                     rule_node("root", empty_node(token_node("a_rule", token("a"))))
                 ),
-                (
-                    tokens(token("b"), token("c")),
-                    rule_node("root", empty_node(
-                        rule_node("b_rule",
-                            token_node("", token("b")),
-                            token_node("", token("c")))))
-                ),
-                (
-                    tokens(token("b")),
-                    null
-                ),
+                // (
+                //     tokens(token("b"), token("c")),
+                //     rule_node("root", empty_node(
+                //         rule_node("b_rule",
+                //             token_node("", token("b")),
+                //             token_node("", token("c")))))
+                // ),
+                // (
+                //     tokens(token("b")),
+                //     null
+                // ),
             })
             {
                 Func<Node> apply = () => new Parser(

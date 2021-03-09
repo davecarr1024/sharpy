@@ -44,6 +44,25 @@ namespace SharpyTest.LexerTest
     }
 
     [TestClass]
+    public class NotTest : RuleTest<string, string, RegExp.Error>
+    {
+        public override Processor<string, string> Processor() => new RegExp(null);
+
+        [TestMethod]
+        public void TestApply()
+        {
+            TestRule(RegExp.not(RegExp.terminal('a')),
+                new List<(string, string)>{
+                    ("", null),
+                    ("a", null),
+                    ("ab", null),
+                    ("b", "b"),
+                    ("ba", "b"),
+                });
+        }
+    }
+
+    [TestClass]
     public class RegExpTest : RuleTest<State, IEnumerable<Token>, Lexer.Error>
     {
         public override Processor<State, IEnumerable<Token>> Processor()
@@ -102,5 +121,49 @@ namespace SharpyTest.LexerTest
                 }
             );
         }
+
+        [TestMethod]
+        public void TestEqual()
+        {
+            Assert.AreEqual(new RegExp(null), new RegExp(null));
+            Assert.AreEqual(new RegExp(RegExp.terminal('a')), new RegExp(RegExp.terminal('a')));
+            Assert.AreNotEqual(new RegExp(RegExp.terminal('a')), new RegExp(RegExp.class_('0', '9')));
+            Assert.AreEqual(
+                new RegExp(RegExp.and(RegExp.and(RegExp.terminal('a'), RegExp.terminal('b'), RegExp.terminal('c')))),
+                new RegExp(RegExp.and(RegExp.and(RegExp.terminal('a'), RegExp.terminal('b'), RegExp.terminal('c'))))
+            );
+        }
+
+        [TestMethod]
+        public void TestRead()
+        {
+            foreach ((var input, var expected) in new List<(string, RegExp)>{
+                (
+                    "abc",
+                    new RegExp(
+                        RegExp.and(
+                            RegExp.terminal('a'),
+                            RegExp.terminal('b'),
+                            RegExp.terminal('c')
+                        )
+                    )
+                ),
+                (
+                    "a*b",
+                    new RegExp(
+                        RegExp.and(
+                            RegExp.zero_or_more(
+                                RegExp.terminal('a')
+                            ),
+                            RegExp.terminal('b')
+                        )
+                    )
+                ),
+            })
+            {
+                Assert.AreEqual(expected, RegExp.Build(input));
+            }
+        }
     }
 }
+

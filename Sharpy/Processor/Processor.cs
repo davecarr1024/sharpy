@@ -72,10 +72,9 @@ namespace Sharpy.Processor
                 Input = input;
             }
 
-            public Context Advance(TOutput output)
-            {
-                return new Context(Processor, Processor.Advance(Input, output));
-            }
+            public Context Advance(TOutput output) => new Context(Processor, Processor.Advance(Input, output));
+
+            public TOutput Aggregate(IEnumerable<TOutput> outputs) => Processor.Aggregate(this, outputs);
 
             public Error Error(string message) => new Error(message, Location);
 
@@ -135,32 +134,18 @@ namespace Sharpy.Processor
             public TOutput Apply(Context context)
             {
                 var errors = new List<Error>();
-                var rule_outputs = new List<TOutput>();
                 foreach (var rule in Rules)
                 {
                     try
                     {
-                        rule_outputs.Add(rule.Apply(context));
+                        return context.Aggregate(new List<TOutput> { rule.Apply(context) });
                     }
                     catch (Error error)
                     {
                         errors.Add(error);
                     }
                 }
-                if (rule_outputs.Count == 1)
-                {
-                    return context.Processor.Aggregate(
-                        context.Advance(rule_outputs.First()),
-                        new List<TOutput> { rule_outputs.First() });
-                }
-                else if (rule_outputs.Count > 1)
-                {
-                    throw new Error($"ambiguous or {rule_outputs}");
-                }
-                else
-                {
-                    throw context.Error(errors);
-                }
+                throw context.Error(errors);
             }
         }
 
@@ -328,6 +313,11 @@ namespace Sharpy.Processor
             => obj is Processor<TInput, TOutput> rhs && Rules.SequenceEqual(rhs.Rules) && Root == rhs.Root;
 
         public override int GetHashCode() => HashCode.Combine(Rules, Root);
+
+        public override string ToString()
+            => string.Format("Processor(Rules={0}, Root={1})",
+                string.Join(", ", Rules.Select(i => i.ToString())),
+                Root);
 
         public abstract TInput Advance(TInput input, TOutput output);
 
